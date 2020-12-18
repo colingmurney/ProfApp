@@ -1,0 +1,22 @@
+
+--CREATE FUNCTION dbo.checkIfUpvoteExists(@postid int, @studentid int)
+--RETURNS INT
+--AS BEGIN
+--	DECLARE @return int
+--	IF EXISTS(SELECT * FROM Upvote WHERE PostId = @postid AND StudentId = @studentid)
+--		SET @return = 0
+--	ELSE
+--		SET @return = 1
+--	RETURN @return
+--END;
+
+--CREATE FUNCTION dbo.checkIfDownvoteExists(@postid int, @studentid int)
+--RETURNS INT
+--AS BEGIN
+--	DECLARE @return int
+--	IF EXISTS(SELECT * FROM Downvote WHERE PostId = @postid AND StudentId = @studentid)
+--		SET @return = 0
+--	ELSE
+--		SET @return = 1
+--	RETURN @return
+--END;
