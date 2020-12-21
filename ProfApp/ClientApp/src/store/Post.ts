@@ -6,9 +6,9 @@ export interface PostState {
     profs?: Prof[];
     profIdSelected?: string, 
     profNameSelected: string,
-    attachment: string;
+    // attachment: string;
     inputFiles: FileList;
-    posts?: PostData[]; 
+    posts?: Post[]; 
     uploadSuccessful?: boolean;
     errorMsg: string;
     postCourse?: string,
@@ -16,8 +16,19 @@ export interface PostState {
     postBody?: string,
 }
 
-interface PostData {
-    
+interface Post {
+    postId: number;
+    date: Date;
+    course: string,
+    header: string,
+    body: string,
+    attachment: string | null,
+    imageFile: null,
+    imageSrc: string,
+    profId: number,
+    prof: null,
+    studentId: number,
+    student: null
 }
 
 interface Prof {
@@ -66,11 +77,17 @@ export interface changeBodyAction {
 export interface uploadPostAction {
     type: "UPLOAD_POST";
     uploadSuccessful: boolean;
-    errMsg?: string;
+    // errMsg?: string;
+}
+
+export interface fetchPostsAction {
+    type: "FETCH_POSTS";
+    posts?: Post[];
+    errorMsg?: string;
 }
 
 export type KnownAction = inputFileAction | getProfsAction | selectProfAction | changeCourseAction |
-    changeBodyAction| changeHeaderAction | uploadPostAction | errorAction;
+    changeBodyAction| changeHeaderAction | uploadPostAction | fetchPostsAction | errorAction;
 
 export const actionCreators = {
     changeCourse: (event: React.ChangeEvent<HTMLInputElement>): changeCourseAction => (
@@ -92,29 +109,41 @@ export const actionCreators = {
                 dispatch({ type: 'ERROR', errorMsg: err } as errorAction)
             });
     },
+    fetchPosts: (): AppThunkAction<KnownAction> => async (dispatch) => {
+        await axios.get<Post[]>("api/studentpost/")
+        .then((response) => {
+                dispatch({ type: 'FETCH_POSTS', posts: response.data  });
+            })
+            .catch(() => {
+                dispatch({ type: 'FETCH_POSTS', errorMsg: "Posts were unable to load"})
+            });
+    },
     uploadPost: (): AppThunkAction<KnownAction> => async (dispatch, getState) => {
-        const {postHeader, postCourse, postBody, profIdSelected, inputFiles, attachment} = getState().post;
+        const {postHeader, postCourse, postBody, profIdSelected, inputFiles} = getState().post;
 
         const formData = new FormData();
         formData.append('header', postHeader)
         formData.append('course', postCourse)
         formData.append('body', postBody)
         formData.append('profId', profIdSelected)
-        formData.append('attachment', attachment) 
-        formData.append('imageFile', inputFiles[0])
+        // formData.append('attachment', attachment)
+        if (inputFiles !== null) {
+            formData.append('imageFile', inputFiles[0])
+        }
+        
 
         await axios.post<Prof[]>("api/studentpost/upload", formData)
         .then((response) => {
                 dispatch({ type: 'UPLOAD_POST', uploadSuccessful: true  } as uploadPostAction);
             })
             .catch((err) => {
-                dispatch({ type: 'UPLOAD_POST', uploadSuccessful: false, errMsg: err } as uploadPostAction)
+                dispatch({ type: 'UPLOAD_POST', uploadSuccessful: false } as uploadPostAction)
             });
     },
 }
 
 const initialState: PostState = {
-    attachment: 'This is a temp value to validate ASP.NET CORE model. It is included in create post request',
+    // attachment: 'This is a temp value to validate ASP.NET CORE model. It is included in create post request',
     inputFiles: null,
     errorMsg: '',
     profNameSelected: "Professor"
@@ -143,6 +172,12 @@ export const reducer: Reducer<PostState> = (state = initialState, incomingAction
             return {
                 ...state,
                 profs: action.profs
+            };
+        case 'FETCH_POSTS':
+            return {
+                ...state,
+                posts: action.posts,
+                errorMsg: action.errorMsg
             };
         case 'SELECT_PROF':
             return {

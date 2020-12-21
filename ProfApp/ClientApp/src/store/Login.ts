@@ -14,10 +14,11 @@ export interface LoginState {
     lastName: string;
     rememberMe: boolean;
     isSignedIn: boolean;
-    // incorrectCredentials: boolean;
+    incorrectCredentials: boolean;
     isSignUpPage: boolean;
     // passwordsDontMatch: boolean;
     userData?: UserData[];
+    isFetching: boolean;
 }
 
 export interface UserData {
@@ -54,6 +55,7 @@ export interface changeLastNameAction {
 export interface signInAction {
     type: 'SIGN_IN';
     isSignedIn: boolean;
+    incorrectCredentials: boolean;
 }
 
 export interface authenticateAction {
@@ -68,7 +70,12 @@ export interface logoutAction {
 
 export interface signUpAction {
     type: 'SIGN_UP';
-    isSignedIn: boolean
+    isSignedIn: boolean;
+}
+
+export interface fetchingAction {
+    type: 'FETCHING';
+    isFetching: boolean;
 }
 
 export interface toggleRemmberMeAction {type: 'TOGGLE_REMEMBER_ME'}
@@ -76,7 +83,7 @@ export interface toggleViewAction {type: 'TOGGLE_VIEW'}
 
 export type KnownAction = changeEmailAction | changePasswordAction | toggleRemmberMeAction |
     toggleViewAction | changeConfirmPasswordAction | changeFirstNameAction | changeLastNameAction
-    | signInAction | authenticateAction | logoutAction | signUpAction;
+    | signInAction | authenticateAction | logoutAction | signUpAction | fetchingAction;
 
 export const actionCreators = {
     changeEmail: (event: React.ChangeEvent<HTMLInputElement>): changeEmailAction => (
@@ -93,6 +100,8 @@ export const actionCreators = {
     toggleView: (): toggleViewAction => ({type: 'TOGGLE_VIEW'}),
 
     signIn: (): AppThunkAction<KnownAction> => async (dispatch, getState) => {
+        dispatch({type: 'FETCHING', isFetching: true});
+
         const appState = getState();
         const {email, password, rememberMe} = appState.login
         const body = {
@@ -107,10 +116,10 @@ export const actionCreators = {
                 data: JSON.stringify(body),
             })
             .then(() => {
-                    dispatch({ type: 'SIGN_IN', isSignedIn: true });
+                    dispatch({ type: 'SIGN_IN', isSignedIn: true, incorrectCredentials: false });
                 })
                 .catch(() => {
-                    dispatch({ type: 'SIGN_IN', isSignedIn: false })
+                    dispatch({ type: 'SIGN_IN', isSignedIn: false, incorrectCredentials: true })
                 });
     },
 
@@ -170,21 +179,31 @@ const initialState: LoginState = {
     isSignUpPage: false,
     rememberMe: false,
     isSignedIn: false,
+    isFetching: false,
+    incorrectCredentials: false,
 }
 
 export const reducer: Reducer<LoginState> = (state = initialState, incomingAction: Action): LoginState => {
 
     const action = incomingAction as KnownAction;
     switch (action.type) {
+        case 'FETCHING':
+            return { 
+                ...state,
+                isFetching: action.isFetching
+            };
         case 'SIGN_IN':
             return { 
                 ...state,
-                isSignedIn: action.isSignedIn
+                isSignedIn: action.isSignedIn,
+                isFetching: false,
+                incorrectCredentials: action.incorrectCredentials
             };
         case 'SIGN_UP':
             return { 
                 ...state,
-                isSignedIn: action.isSignedIn
+                isSignedIn: action.isSignedIn,
+                isFetching: false
             };
         case 'LOGOUT':
             return { 

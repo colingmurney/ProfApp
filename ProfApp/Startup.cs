@@ -5,9 +5,11 @@ using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using ProfApp.Models;
+using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -99,7 +101,13 @@ namespace ProfApp
             }
 
             app.UseHttpsRedirection();
-            app.UseStaticFiles();
+
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = new PhysicalFileProvider(Path.Combine(env.ContentRootPath, "Files/")),
+                RequestPath = "/Files"
+            });
+
             app.UseSpaStaticFiles();
 
             app.UseRouting();

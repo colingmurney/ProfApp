@@ -29,13 +29,16 @@ class Dropdown extends React.Component<DropdownProps> {
       );
     });
         return (
-            <select onChange={(e) => this.props.selectProf(e)} value={this.props.profNameSelected}>
-                <option disabled >
-                    Professor
-                </option>
-                    {dropdownList}
-                
-            </select>
+            <div className="form-group col-md-4">
+                <label>Select Professor</label>
+                <select className="form-control" onChange={(e) => this.props.selectProf(e)} required>
+                    <option value="" disabled selected>
+                        Professor
+                    </option>
+                        {dropdownList}
+                    
+                </select>
+            </div>
         )
     }
 }

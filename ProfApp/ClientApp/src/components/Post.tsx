@@ -12,6 +12,7 @@ class Post extends React.Component<PostProps> {
     componentDidMount() {
         //dispatch action that retrieves profs available updates state
         this.props.getProfs();
+        this.props.fetchPosts();
     }
 
     // handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -28,21 +29,55 @@ class Post extends React.Component<PostProps> {
 
     }
 
-    //render a component that is a dynamic drop down menu with profs names
+    
+
     public render() {
-        return (
-            <div>
-                <form onSubmit={(e) => this.handlePostUpload(e)}>
-                    {this.props.profs && <Dropdown />}
-                    <input type="text" onChange={(e) => this.props.changeCourse(e)} />
-                    <input type="text"onChange={(e) => this.props.changeHeader(e)} />
-                    <textarea cols={30} rows={10} onChange={(e) => this.props.changeBody(e)} />
-                    <input type="file" onChange={(e) => this.props.uploadFile(e)} />
-                    {/* onChange={(e) => this.handleFileUpload(e)} */}
-                    <button type="submit">Upload Post</button>
-                </form>
-            </div>
-        )
+
+        const {uploadSuccessful} = this.props;
+
+        if (uploadSuccessful === undefined || !uploadSuccessful) {
+            return (
+                <div>
+                    <form onSubmit={(e) => this.handlePostUpload(e)}>
+                        <div className="form-row">
+                            <div className="form-group col-md-4 mr-5">
+                                <label>Course Name</label>
+                                <input type="text" className="form-control" onChange={(e) => this.props.changeCourse(e)} required />
+                            </div>
+                            <div className="form-group col-md-6">    
+                                <label>Post Header</label>
+                                <input type="text" className="form-control" onChange={(e) => this.props.changeHeader(e)} required/>
+                            </div>
+                        </div>
+                        <div className="form-row">
+                            {this.props.profs && <Dropdown />}
+                            <div className="form-group col-md-6 ml-5">
+                                <label>Attach a file</label>
+                                <input type="file" className="form-control-file" onChange={(e) => this.props.uploadFile(e)} />
+                            </div>
+                        </div>
+                        <div className="form-row">
+                            <div className="form-group col-md-12">
+                                <label>Tell everyone your experience</label>
+                                <textarea className="form-control" rows={6} onChange={(e) => this.props.changeBody(e)} required/>
+                            </div>
+                        </div>
+                        <button  className="btn btn-primary col-md-12" type="submit">Upload Post</button>
+                    </form>
+                    {uploadSuccessful !== undefined && !uploadSuccessful &&
+                        <div className="alert alert-danger mt-3" role="alert">
+                            There was an error while uploading your post.
+                        </div>
+                    }
+                </div>
+            )
+        } else {
+            return (
+                <div className="alert alert-success" role="alert">
+                    "Put a post successful msg component here."
+                </div>
+            )
+        }
     }
 }
 

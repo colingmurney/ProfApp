@@ -21,11 +21,13 @@ namespace ProfApp.Models
         [Required]
         [StringLength(100)]
         public string Body { get; set; }
-        [Required]
+        
         [StringLength(255)]
         public string Attachment { get; set; }
         [NotMapped]
         public IFormFile ImageFile { get; set; }
+        [NotMapped]
+        public string ImageSrc { get; set; }
 
 
         // Foreign Keys

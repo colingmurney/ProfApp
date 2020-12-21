@@ -4,6 +4,7 @@ import { ApplicationState } from '../store';
 import * as LoginStore from '../store/Login';
 import '../css/Login.css'; 
 import { Redirect } from 'react-router';
+import Spinner from 'react-bootstrap/Spinner';
 
 type SignInProps =
     LoginStore.LoginState &
@@ -15,24 +16,36 @@ class SignIn extends React.PureComponent<SignInProps> {
     e.preventDefault();
     this.props.signIn()
   }
-
-  // redirectSignUp() {
-  //   return <Redirect to="/signup"/>
-  // }
   
   public render() {
     
-    const {isSignUpPage, isSignedIn} = this.props;
+    const {isSignUpPage, isSignedIn, isFetching, incorrectCredentials} = this.props;
     if (isSignedIn)
           return <Redirect to='/'/>
     if (isSignUpPage) {
       return <Redirect to='/signup'/>
     }
+    if (isFetching) {
+      return (
+        <div className="d-flex justify-content-center">
+          <Spinner animation="border" role="status">
+            <span className="sr-only">Loading...</span>
+            <span>Signing In...</span>
+          </Spinner>
+        </div>
+      )
+    }
     return (
         <div className="login">
           <h1 className="mt-5 mb-5">RecLeague</h1>
           <form className="form-signin" onSubmit={(e) => this.signInHandler(e)} autoComplete="off" >
-          {/* onSubmit={(e) => this.signInHandler(e)} */}
+          {incorrectCredentials &&
+            <div className="d-flex justify-content-center">
+              <div className="alert alert-danger" role="alert">
+                  Incorrect email or password.
+              </div>
+            </div>
+          }
             <h1 className="h3 mb-3 font-weight-normal">Please sign in</h1>
             <input
               type="email"
@@ -54,7 +67,8 @@ class SignIn extends React.PureComponent<SignInProps> {
                   onClick={() => this.props.toggleRememberMe()}
                   type="checkbox"
                   value="remember-me"
-                />{" "}
+                  className="mr-2"
+                />
                 Remember me
               </label>
             </div>
@@ -65,12 +79,9 @@ class SignIn extends React.PureComponent<SignInProps> {
               Sign in
             </button>
           </form>
-          <button onClick={() => this.props.toggleView()}> 
-              Make an Account
-            </button>
-            {/* <button onClick={() => this.redirectSignUp()}> 
-              Make an Account
-            </button> */}
+          <button className="btn btn-secondary" onClick={() => this.props.toggleView()}> 
+            Make an Account
+          </button>
         </div>
         )
     }
