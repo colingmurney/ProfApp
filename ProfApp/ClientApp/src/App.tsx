@@ -8,8 +8,10 @@ import { Container } from 'reactstrap';
 import NavMenu from './components/NavMenu';
 import SignIn from './components/SignIn';
 import SignUp from './components/SignUp';
+import Post from './components/Post';
 
 import './custom.css'
+import MakePost from './components/MakePost';
 
 const App: React.FC = () => {
 
@@ -22,6 +24,8 @@ const App: React.FC = () => {
             <Route path='/fetch-data/:startDateIndex?' component={FetchData} />
             <Route path='/signin' component={SignIn} />
             <Route path='/signup' component={SignUp} />
+            <Route path='/post/:postId' component={Post} />
+            <Route path='/make-post' component={MakePost} />
         </Container>
     </React.Fragment>
     )

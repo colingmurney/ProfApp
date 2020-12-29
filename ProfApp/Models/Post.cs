@@ -28,6 +28,8 @@ namespace ProfApp.Models
         public IFormFile ImageFile { get; set; }
         [NotMapped]
         public string ImageSrc { get; set; }
+        //[NotMapped]
+        //public byte? Vote { get; set; }
 
 
         // Foreign Keys

@@ -32,6 +32,7 @@
 
   <ItemGroup>
     <Folder Include="Files\Images\" />
+    <Folder Include="Files\Pdf\" />
   </ItemGroup>
 
   <Target Name="DebugEnsureNodeEnv" BeforeTargets="Build" Condition=" '$(Configuration)' == 'Debug' And !Exists('$(SpaRoot)node_modules') ">

@@ -42,6 +42,9 @@ class NavMenu extends React.PureComponent<LoginProps, { isOpen: boolean }> {
                                 <NavItem>
                                     <NavLink tag={Link} className="text-dark" to="/fetch-data">Fetch data</NavLink>
                                 </NavItem>
+                                <NavItem>
+                                    <NavLink tag={Link} className="text-dark" to="/make-post">Make post</NavLink>
+                                </NavItem>                                
                                 { !this.props.isSignedIn && <NavItem>
                                     <NavLink tag={Link} className="text-dark" to="/signin">Login</NavLink>
                                 </NavItem> 

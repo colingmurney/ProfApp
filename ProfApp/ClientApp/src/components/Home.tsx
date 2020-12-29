@@ -1,28 +1,33 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import Post from './Post';
-import * as LoginStore from '../store/Login';
+import Post from './PostForm';
+import * as PostStore from '../store/Post';
 // import * as PostStore from '../store/Post';
 import {ApplicationState} from '../store/index'
+import Posts from './Posts';
 
 type HomeProps =
-    LoginStore.LoginState &
-    typeof LoginStore.actionCreators
+    PostStore.PostState &
+    typeof PostStore.actionCreators
 
 
 class Home extends React.PureComponent<HomeProps> {
-  
+  componentDidMount() {
+    this.props.fetchPosts()
+  }
+
   public render() {
+    const {posts} = this.props
+
     return (
       <div>
-        {/* Only render Post component if isSignedIn */}
-        {this.props.isSignedIn && <Post />}
+        {posts && posts[0] && <Posts/>}
       </div>
     )
   }
 };
 
 export default connect(
-  (state: ApplicationState) => state.login,
-    LoginStore.actionCreators
+  (state: ApplicationState) => state.post,
+    PostStore.actionCreators
 )(Home as any);

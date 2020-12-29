@@ -42,7 +42,11 @@ USE ProfAppV2;
 --INSERT INTO Comment (PostId, StudentId, Date, Body) VALUES (1, 2, '2020-12-03 12:00:00', 'Thank you for posting this');
 --INSERT INTO Comment (PostId, StudentId, Date, Body) VALUES (1, 1, '2020-12-03 12:25:00', 'My pleasure');
 
---INSERT INTO Upvote(PostId, StudentId, Date) VALUES (1, 2, '2020-12-02 20:00:00');
---INSERT INTO Upvote(PostId, StudentId, Date) VALUES (1, 3, '2020-12-04 15:34:56');
+--INSERT INTO Upvote(PostId, StudentId, Date) VALUES (3, 2, '2020-12-02 20:00:00');
+--INSERT INTO Upvote(PostId, StudentId, Date) VALUES (4, 3, '2020-12-04 15:34:56');
+--INSERT INTO Upvote(PostId, StudentId, Date) VALUES (4, 1, '2020-12-04 18:00:50');
 
---INSERT INTO Downvote(PostId, StudentId, Date) VALUES (1, 4, '2020-12-05 10:29:09');
+
+--INSERT INTO Downvote(PostId, StudentId, Date) VALUES (3, 4, '2020-12-05 10:29:09');
+--INSERT INTO Downvote(PostId, StudentId, Date) VALUES (3, 1, '2020-12-06 10:00:00');
+

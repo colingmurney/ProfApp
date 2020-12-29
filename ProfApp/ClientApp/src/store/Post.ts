@@ -14,11 +14,13 @@ export interface PostState {
     postCourse?: string,
     postHeader?: string,
     postBody?: string,
+    currentPost?: Post,
 }
 
-interface Post {
+export interface Post {
     postId: number;
-    date: Date;
+    // date: Date;
+    date: string
     course: string,
     header: string,
     body: string,
@@ -86,8 +88,14 @@ export interface fetchPostsAction {
     errorMsg?: string;
 }
 
+export interface fetchCurrentPost {
+    type?: "FETCH_CURRENT_POST";
+    currentPost?: Post;
+    errorMsg?: string;
+}
+
 export type KnownAction = inputFileAction | getProfsAction | selectProfAction | changeCourseAction |
-    changeBodyAction| changeHeaderAction | uploadPostAction | fetchPostsAction | errorAction;
+    changeBodyAction| changeHeaderAction | uploadPostAction | fetchPostsAction | fetchCurrentPost | errorAction;
 
 export const actionCreators = {
     changeCourse: (event: React.ChangeEvent<HTMLInputElement>): changeCourseAction => (
@@ -117,6 +125,35 @@ export const actionCreators = {
             .catch(() => {
                 dispatch({ type: 'FETCH_POSTS', errorMsg: "Posts were unable to load"})
             });
+    },
+    fetchCurrentPost: (postId: number ): AppThunkAction<KnownAction> => async (dispatch, getState) => {
+        
+        //LOGIC FROM POST COMPONENT GOES HERE. IF CANNOT MATCH POSTID FROM STATE THEN MAKE API CALL BELOW.
+        //IF POST IS FOUND IN POSTS, THEN MAKE DISPATCH TO TAKE THAT POST AND PUT IN currentPost
+        const {posts} = getState().post;
+        let postInStore = false;
+
+        if (posts) {
+            for (let i=0; i<posts.length; i++) {
+                console.log(i)
+                if (posts[i].postId === postId) {
+                    dispatch({ type: 'FETCH_CURRENT_POST', currentPost: posts[i] });
+                    postInStore = true;
+                    // currentPost = posts[i];
+                    break;   
+                } 
+            }
+        }
+        
+        if (!postInStore) {
+            await axios.get<Post>(`api/studentpost/single/?postId=${postId}`)
+            .then((response) => {
+                    dispatch({ type: 'FETCH_CURRENT_POST', currentPost: response.data  });
+                })
+                .catch(() => {
+                    dispatch({ type: 'FETCH_CURRENT_POST', errorMsg: "Posts were unable to load"})
+                });
+        }
     },
     uploadPost: (): AppThunkAction<KnownAction> => async (dispatch, getState) => {
         const {postHeader, postCourse, postBody, profIdSelected, inputFiles} = getState().post;
@@ -179,6 +216,12 @@ export const reducer: Reducer<PostState> = (state = initialState, incomingAction
                 posts: action.posts,
                 errorMsg: action.errorMsg
             };
+        case 'FETCH_CURRENT_POST':
+            return {
+                ...state,
+                currentPost: action.currentPost,
+                errorMsg: action.errorMsg
+            }    
         case 'SELECT_PROF':
             return {
                 ...state,

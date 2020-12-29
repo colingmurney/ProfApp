@@ -16,7 +16,8 @@ namespace ProfApp.Models
         public DbSet<Comment> Comments { get; set; }
         public DbSet<Downvote> Downvotes { get; set; }
         public DbSet<Upvote> Upvotes { get; set; }
-        
+        public DbSet<PostResponse> PostResponses { get; set; }
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder.UseSqlServer("Data Source=COLIN;Initial Catalog=ProfAppV2;Integrated Security=True;ConnectRetryCount=0");
@@ -50,6 +51,9 @@ namespace ProfApp.Models
             modelBuilder.Entity<Prof>()
                 .HasIndex(p => new { p.ProfFirstName, p.ProfLastName, p.SchoolId  })
                     .IsUnique();
+
+            modelBuilder.Entity<PostResponse>()
+                .HasNoKey();
 
         }
     }

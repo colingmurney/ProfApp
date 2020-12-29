@@ -2,7 +2,7 @@ import React from 'react';
 import * as PostStore from '../store/Post';
 import { connect } from 'react-redux';
 import { ApplicationState } from '../store';
-import * as Post from './Post';
+import * as Post from './PostForm';
 
 interface injected {
     dropdownType: string;

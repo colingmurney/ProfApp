@@ -1,85 +1,72 @@
 import React, { FormEvent } from 'react';
-import * as PostStore from '../store/Post';
+// import {PostProps} from './PostForm';
 import { connect } from 'react-redux';
 import { ApplicationState } from '../store';
-import Dropdown from './Dropdown';
-
+import * as PostStore from '../store/Post';
+import '../css/home.css';
+import formatDate from '../utils/formatDate';
+import { RouteComponentProps } from 'react-router';
+import {Link} from 'react-router-dom';
 
 export type PostProps = PostStore.PostState &
-    typeof PostStore.actionCreators 
+    typeof PostStore.actionCreators &
+    RouteComponentProps<{postId: string}>
+
 
 class Post extends React.Component<PostProps> {
     componentDidMount() {
-        //dispatch action that retrieves profs available updates state
-        this.props.getProfs();
-        this.props.fetchPosts();
+        const postId = parseInt(this.props.match.params.postId);
+        this.props.fetchCurrentPost(postId);
     }
-
-    // handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    //     const file = e.target.files[0];
-    //     const reader = new FileReader();
-    //     reader.onload = () => {
-    //         this.props.uploadFile(file);
-    //     }
-    // }
-
-    handlePostUpload(e: FormEvent<HTMLFormElement>) {
-        e.preventDefault();
-        this.props.uploadPost();
-
-    }
-
-    
-
+    //Dynamically make components for posts, eventually make pagination to load more posts
     public render() {
+        const postId = parseInt(this.props.match.params.postId)
+        // console.log(postId)
+        // const {posts} = this.props
 
-        const {uploadSuccessful} = this.props;
+        // let currentPost: PostStore.Post;
 
-        if (uploadSuccessful === undefined || !uploadSuccessful) {
+        
+        // for (let i=0; i<posts.length; i++) {
+        //     console.log(i)
+        //     if (posts[i].postId === postId) {
+        //         currentPost = posts[i];
+        //         break;   
+        //     } 
+        // }
+        
+        // posts.forEach(post => {
+        //     if (post.postId === postId) {
+        //         currentPost = post
+        //     }            
+        // });
+      if (this.props.currentPost) {
+            const {date, course, body, header, attachment, imageSrc} = this.props.currentPost;
+
             return (
                 <div>
-                    <form onSubmit={(e) => this.handlePostUpload(e)}>
-                        <div className="form-row">
-                            <div className="form-group col-md-4 mr-5">
-                                <label>Course Name</label>
-                                <input type="text" className="form-control" onChange={(e) => this.props.changeCourse(e)} required />
+                    <div className="jumbotron p-3 pb-1">
+                        
+
+                            <h1>{header}</h1>
+                            <p><b>Course: </b>{course}</p>
+                            <p><b>Attachment: </b><a href={imageSrc} target="_blank">{attachment}</a></p>
+                            <div className="post-body">
+                                <p>{body}</p>
                             </div>
-                            <div className="form-group col-md-6">    
-                                <label>Post Header</label>
-                                <input type="text" className="form-control" onChange={(e) => this.props.changeHeader(e)} required/>
-                            </div>
+                            <p className="date">{formatDate(date)}</p>
                         </div>
-                        <div className="form-row">
-                            {this.props.profs && <Dropdown />}
-                            <div className="form-group col-md-6 ml-5">
-                                <label>Attach a file</label>
-                                <input type="file" className="form-control-file" onChange={(e) => this.props.uploadFile(e)} />
-                            </div>
-                        </div>
-                        <div className="form-row">
-                            <div className="form-group col-md-12">
-                                <label>Tell everyone your experience</label>
-                                <textarea className="form-control" rows={6} onChange={(e) => this.props.changeBody(e)} required/>
-                            </div>
-                        </div>
-                        <button  className="btn btn-primary col-md-12" type="submit">Upload Post</button>
-                    </form>
-                    {uploadSuccessful !== undefined && !uploadSuccessful &&
-                        <div className="alert alert-danger mt-3" role="alert">
-                            There was an error while uploading your post.
-                        </div>
-                    }
-                </div>
-            )
-        } else {
-            return (
-                <div className="alert alert-success" role="alert">
-                    "Put a post successful msg component here."
+                    
+
+                    Put attachment preview here
                 </div>
             )
         }
+
+        return "Loading post"
     }
 }
+
 
 export default connect(
     (state: ApplicationState) => state.post,
