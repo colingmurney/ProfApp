@@ -8,13 +8,15 @@ export interface PostState {
     profNameSelected: string,
     // attachment: string;
     inputFiles: FileList;
-    posts?: Post[]; 
+    posts?: Post[];
     uploadSuccessful?: boolean;
     errorMsg: string;
     postCourse?: string,
     postHeader?: string,
     postBody?: string,
     currentPost?: Post,
+    search: string,
+    searchPreviewResults: SearchPreviewResult[]
 }
 
 export interface Post {
@@ -30,7 +32,17 @@ export interface Post {
     profId: number,
     prof: null,
     studentId: number,
-    student: null
+    student: null,
+    currentVoteStatus?: number,
+    totalVotes: number
+}
+
+export interface SearchPreviewResult {
+    postId: number,
+    course: string,
+    header: string,
+    body: string,
+    profFullName: string,
 }
 
 interface Prof {
@@ -94,8 +106,27 @@ export interface fetchCurrentPost {
     errorMsg?: string;
 }
 
+export interface voteAction {
+    type: "VOTE_POST";
+    index: number;
+    currentVoteStatusStatus?: number;
+    errorMsg?: string;
+}
+
+export interface changeSearchAction {
+    type: "CHANGE_SEARCH";
+    search: string;
+}
+
+export interface searchPreviewAction {
+    type: "SEARCH_PREVIEW";
+    searchPreviewResults?: SearchPreviewResult[];
+    errorMsg?: string;
+}
+
 export type KnownAction = inputFileAction | getProfsAction | selectProfAction | changeCourseAction |
-    changeBodyAction| changeHeaderAction | uploadPostAction | fetchPostsAction | fetchCurrentPost | errorAction;
+    changeBodyAction| changeHeaderAction | uploadPostAction | fetchPostsAction | fetchCurrentPost |
+    changeSearchAction | voteAction | searchPreviewAction | errorAction;
 
 export const actionCreators = {
     changeCourse: (event: React.ChangeEvent<HTMLInputElement>): changeCourseAction => (
@@ -103,7 +134,9 @@ export const actionCreators = {
     changeHeader: (event: React.ChangeEvent<HTMLInputElement>): changeHeaderAction => (
         { type: 'CHANGE_HEADER', postHeader: event.target.value}),
     changeBody: (event: React.ChangeEvent<HTMLTextAreaElement>): changeBodyAction => (
-        { type: 'CHANGE_BODY', postBody: event.target.value}),    
+        { type: 'CHANGE_BODY', postBody: event.target.value}),
+    changeSearch: (event: React.ChangeEvent<HTMLInputElement>): changeSearchAction => (
+        { type: 'CHANGE_SEARCH', search: event.target.value}),    
     uploadFile: (event: React.ChangeEvent<HTMLInputElement>): inputFileAction =>
         ({ type: "INPUT_FILE", inputFiles: event.target.files }),
     selectProf: (event: React.ChangeEvent<HTMLSelectElement>): selectProfAction => 
@@ -128,7 +161,7 @@ export const actionCreators = {
     },
     fetchCurrentPost: (postId: number ): AppThunkAction<KnownAction> => async (dispatch, getState) => {
         
-        //LOGIC FROM POST COMPONENT GOES HERE. IF CANNOT MATCH POSTID FROM STATE THEN MAKE API CALL BELOW.
+        //IF CANNOT MATCH POSTID FROM STATE THEN MAKE API CALL BELOW.
         //IF POST IS FOUND IN POSTS, THEN MAKE DISPATCH TO TAKE THAT POST AND PUT IN currentPost
         const {posts} = getState().post;
         let postInStore = false;
@@ -155,6 +188,33 @@ export const actionCreators = {
                 });
         }
     },
+    votePost: (voteType: 'upvote' | 'downvote', postIndex: number): AppThunkAction<KnownAction> => async (dispatch, getstate) => {
+        let upvoteSuccessful = false;
+        let errorMsg = "";
+        let { posts } = getstate().post; 
+        const postId = posts[postIndex].postId;
+
+        await axios.post(`api/vote/${voteType}/?postId=${postId}`)
+            .then(() => {
+                    upvoteSuccessful = true;
+                })
+                .catch((err) => {
+                    errorMsg = err;
+                });
+        
+        if (upvoteSuccessful) {
+            // posts[postIndex].vote = 1;
+            let vote: 1 | 0;
+            if (voteType === 'upvote') {
+                vote = 1;
+            } else if (voteType === 'downvote') {
+                vote = 0;
+            }
+            dispatch({ type: 'VOTE_POST', index: postIndex, currentVoteStatusStatus: vote})
+        } else {
+            dispatch({ type: 'VOTE_POST', index: postIndex, errorMsg: errorMsg})
+        }
+    },
     uploadPost: (): AppThunkAction<KnownAction> => async (dispatch, getState) => {
         const {postHeader, postCourse, postBody, profIdSelected, inputFiles} = getState().post;
 
@@ -168,7 +228,6 @@ export const actionCreators = {
             formData.append('imageFile', inputFiles[0])
         }
         
-
         await axios.post<Prof[]>("api/studentpost/upload", formData)
         .then((response) => {
                 dispatch({ type: 'UPLOAD_POST', uploadSuccessful: true  } as uploadPostAction);
@@ -177,13 +236,34 @@ export const actionCreators = {
                 dispatch({ type: 'UPLOAD_POST', uploadSuccessful: false } as uploadPostAction)
             });
     },
+    searchPreview: (): AppThunkAction<KnownAction> => async (dispatch, getState) => {
+        const {search} = getState().post;
+
+        if (search.length === 0) {
+            dispatch({ type: 'SEARCH_PREVIEW', searchPreviewResults: [] });
+        }
+        else {
+        await axios.get<SearchPreviewResult[]>(`api/studentpost/search-preview/?search=${search.trim()}`)
+            .then((response) => {
+                    dispatch({ type: 'SEARCH_PREVIEW', searchPreviewResults: response.data  });
+                })
+                .catch(() => {
+                    dispatch({ type: 'SEARCH_PREVIEW', errorMsg: "Posts were unable to load" })
+            });
+        }
+    },
+    resetSearchPreview: (): searchPreviewAction => (
+        { type: 'SEARCH_PREVIEW', searchPreviewResults: [] }
+    )
 }
 
 const initialState: PostState = {
     // attachment: 'This is a temp value to validate ASP.NET CORE model. It is included in create post request',
     inputFiles: null,
     errorMsg: '',
-    profNameSelected: "Professor"
+    profNameSelected: "Professor",
+    search: "",
+    searchPreviewResults: []
 } 
 
 export const reducer: Reducer<PostState> = (state = initialState, incomingAction: Action): PostState => {
@@ -204,6 +284,11 @@ export const reducer: Reducer<PostState> = (state = initialState, incomingAction
             return {
                 ...state,
                 postBody: action.postBody
+            };
+        case 'CHANGE_SEARCH':
+            return {
+                ...state,
+                search: action.search
             };
         case 'GET_PROFS':
             return {
@@ -238,7 +323,18 @@ export const reducer: Reducer<PostState> = (state = initialState, incomingAction
                 ...state,
                 uploadSuccessful: action.uploadSuccessful,
             }
-        
+        case 'VOTE_POST':
+            return {
+                ...state,
+                posts: state.posts.map((post, i) => i === action.index ? {...post, vote: action.currentVoteStatusStatus} : post
+                )
+            }
+        case 'SEARCH_PREVIEW':
+            return {
+                ...state,
+                searchPreviewResults: action.searchPreviewResults,
+                errorMsg: action.errorMsg,
+            }
         default:
             return state;
     }

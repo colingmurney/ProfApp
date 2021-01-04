@@ -2,18 +2,20 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import Post from './PostForm';
 import * as PostStore from '../store/Post';
-// import * as PostStore from '../store/Post';
+import * as LoginStore from '../store/Login';
 import {ApplicationState} from '../store/index'
 import Posts from './Posts';
 
-type HomeProps =
+export type HomeProps =
     PostStore.PostState &
-    typeof PostStore.actionCreators
+    typeof PostStore.actionCreators &
+    LoginStore.LoginState &
+    typeof LoginStore.actionCreators
 
 
 class Home extends React.PureComponent<HomeProps> {
   componentDidMount() {
-    this.props.fetchPosts()
+    this.props.fetchPosts() 
   }
 
   public render() {
@@ -27,7 +29,25 @@ class Home extends React.PureComponent<HomeProps> {
   }
 };
 
+const mapStateToProps = (state: ApplicationState) => {
+  return {  
+     ...state.post,
+     ...state.login
+  };
+};
+
+// const mapDispatchToProps = (dispatch: any ) => {
+//   return {
+//     fetchPosts: () => {
+//       dispatch(PostStore.actionCreators.fetchPosts())
+//     }
+//   };
+// }
+
 export default connect(
-  (state: ApplicationState) => state.post,
-    PostStore.actionCreators
-)(Home as any);
+  mapStateToProps,
+  {
+    ...PostStore.actionCreators,
+    ...LoginStore.actionCreators
+  }
+)(Home as any)

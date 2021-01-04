@@ -25,4 +25,105 @@
 --ORDER BY Date desc;
 --END;
 
-EXEC dbo.GetPostsWithVote @StudentId = 1;
+--EXEC dbo.GetPostsWithVote @StudentId = 1;
+
+--CREATE OR ALTER PROCEDURE GetPostsSignedIn @StudentId int
+--AS
+--BEGIN
+--WITH votedPosts (PostId, Date, Course, Header, Body, Attachment, StudentId, ProfId, CurrentVoteStatus)
+--AS
+--(
+--SELECT Post.PostId, Post.Date, Post.Course, Post.Header, Post.Body, Post.Attachment, Post.StudentId, Post.ProfId, 1 AS CurrentVoteStatus
+--FROM Post, Upvote
+--WHERE Post.PostId = Upvote.PostId AND Upvote.StudentId = @StudentId
+--UNION
+--SELECT Post.PostId, Post.Date, Post.Course, Post.Header, Post.Body, Post.Attachment, Post.ProfId, Post.StudentId, 0 AS CurrentVoteStatus
+--FROM Post, Downvote
+--WHERE Post.PostId = Downvote.PostId AND Downvote.StudentId = @StudentId
+--),
+--totalVotes (PostId, TotalVotes)
+--AS
+--(
+--SELECT Post.PostId, COUNT(Upvote.PostId) - COUNT(Downvote.PostId) as TotalVotes
+--FROM Post
+--LEFT JOIN Upvote ON Post.PostId = Upvote.PostId
+--LEFT JOIN Downvote ON Post.PostId = Downvote.PostId
+--GROUP BY Post.PostId
+--)
+--SELECT votedPosts.PostId, Date, Course, Header, Body, Attachment, StudentId, ProfId, CurrentVoteStatus, TotalVotes
+--FROM votedPosts, totalVotes
+--WHERE votedPosts.PostId = totalVotes.PostId
+--UNION
+--SELECT Post.PostId, Date, Course, Header, Body, Attachment, StudentId, ProfId, null as CurrentVoteStatus, TotalVotes
+--FROM Post, totalVotes
+--WHERE Post.PostId = totalVotes.PostId AND
+--	Post.PostId NOT IN (
+--		SELECT PostId
+--		FROM votedPosts
+--	)
+--ORDER BY Date desc;
+--END;
+
+
+--EXEC dbo.GetPostsSignedIn @StudentId = 2;
+
+--CREATE OR ALTER PROCEDURE GetPostsNotSignedIn
+--AS
+--BEGIN
+--WITH totalVotes (PostId, TotalVotes)
+--AS
+--(
+--SELECT Post.PostId, COUNT(Upvote.PostId) - COUNT(Downvote.PostId) as TotalVotes
+--FROM Post
+--LEFT JOIN Upvote ON Post.PostId = Upvote.PostId
+--LEFT JOIN Downvote ON Post.PostId = Downvote.PostId
+--GROUP BY Post.PostId
+--)
+--SELECT Post.PostId, Date, Course, Header, Body, Attachment, StudentId, ProfId, TotalVotes
+--FROM Post, totalVotes
+--WHERE Post.PostId = totalVotes.PostId
+--ORDER BY Date desc;
+--END;
+
+--EXEC dbo.GetPostsNotSignedIn;
+
+--CREATE OR ALTER PROCEDURE SearchPreviewResults @SearchInput VARCHAR(255)
+--AS
+--BEGIN
+--WITH ProfFullName
+--AS
+--(
+--SELECT ProfId, ProfFirstName + ' ' + ProfLastName AS ProfFullName
+--FROM Prof
+--),
+--allSearchPreviewResults (PostId, Course, Header, Body, ProfFullName)
+--AS
+--(
+----Find search matches in profs
+--SELECT TOP 5 Post.PostId, Course, Header, Body, ProfFullName
+--FROM Post
+--JOIN ProfFullName ON Post.ProfId = ProfFullName.ProfId
+--WHERE ProfFullName LIKE ('%' + @searchInput + '%')
+--UNION ALL
+----Find search matches in courses
+--SELECT TOP 5 Post.PostId, Course, Header, Body, ProfFullName
+--FROM Post
+--JOIN ProfFullName ON Post.ProfId = ProfFullName.ProfId
+--WHERE Course LIKE ('%' + @searchInput + '%')
+--UNION ALL
+----Find search matches in headers
+--SELECT TOP 5 Post.PostId, Course, Header, Body, ProfFullName
+--FROM Post
+--JOIN ProfFullName ON Post.ProfId = ProfFullName.ProfId
+--WHERE Header LIKE ('%' + @searchInput + '%')
+--UNION ALL
+----Find search matches in body
+--SELECT TOP 5 Post.PostId, Course, Header, Body, ProfFullName
+--FROM Post
+--JOIN ProfFullName ON Post.ProfId = ProfFullName.ProfId
+--WHERE Body LIKE ('%' + @searchInput + '%')
+--)
+--SELECT TOP 5 * FROM allSearchPreviewResults;
+--END;
+
+EXEC dbo.SearchPreviewResults @SearchInput = 'm';

@@ -5,15 +5,12 @@ import '../css/NavMenu.css';
 import { ApplicationState } from '../store';
 import { connect } from 'react-redux';
 import * as LoginStore from '../store/Login';
-import {LoginProps} from './Login';
-// import { Redirect, RouteComponentProps } from 'react-router';
+import Search from './Search';
 
-// export type LoginProps =
-//     LoginStore.LoginState &
-//     typeof LoginStore.actionCreators &
-//     RouteComponentProps<{}>;
+type NavMenuProps = LoginStore.LoginState &
+    typeof LoginStore.actionCreators
 
-class NavMenu extends React.PureComponent<LoginProps, { isOpen: boolean }> {
+class NavMenu extends React.PureComponent<NavMenuProps, { isOpen: boolean }> {
     public state = {
         isOpen: false
     };
@@ -30,17 +27,15 @@ class NavMenu extends React.PureComponent<LoginProps, { isOpen: boolean }> {
                 <Navbar className="navbar-expand-sm navbar-toggleable-sm border-bottom box-shadow mb-3" light>
                     <Container>
                         <NavbarBrand tag={Link} to="/">ProfApp</NavbarBrand>
+                        {/* <form action="">
+                            <input type="text"/>
+                        </form> */}
+                        <Search/>
                         <NavbarToggler onClick={this.toggle} className="mr-2"/>
                         <Collapse className="d-sm-inline-flex flex-sm-row-reverse" isOpen={this.state.isOpen} navbar>
                             <ul className="navbar-nav flex-grow">
                                 <NavItem>
                                     <NavLink tag={Link} className="text-dark" to="/">Home</NavLink>
-                                </NavItem>
-                                <NavItem>
-                                    <NavLink tag={Link} className="text-dark" to="/counter">Counter</NavLink>
-                                </NavItem>
-                                <NavItem>
-                                    <NavLink tag={Link} className="text-dark" to="/fetch-data">Fetch data</NavLink>
                                 </NavItem>
                                 <NavItem>
                                     <NavLink tag={Link} className="text-dark" to="/make-post">Make post</NavLink>
@@ -49,8 +44,7 @@ class NavMenu extends React.PureComponent<LoginProps, { isOpen: boolean }> {
                                     <NavLink tag={Link} className="text-dark" to="/signin">Login</NavLink>
                                 </NavItem> 
                                 }
-                                { this.props.isSignedIn && <button onClick={() => this.props.logout()} className="btn btn-danger">Logout</button>} 
-                                
+                                { this.props.isSignedIn && <button onClick={() => this.props.logout()} className="btn btn-danger">Logout</button>}
                             </ul>
                         </Collapse>
                     </Container>

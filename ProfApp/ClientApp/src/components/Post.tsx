@@ -1,5 +1,4 @@
-import React, { FormEvent } from 'react';
-// import {PostProps} from './PostForm';
+import React from 'react';
 import { connect } from 'react-redux';
 import { ApplicationState } from '../store';
 import * as PostStore from '../store/Post';
@@ -17,29 +16,12 @@ class Post extends React.Component<PostProps> {
     componentDidMount() {
         const postId = parseInt(this.props.match.params.postId);
         this.props.fetchCurrentPost(postId);
+        this.props.resetSearchPreview()
     }
     //Dynamically make components for posts, eventually make pagination to load more posts
     public render() {
-        const postId = parseInt(this.props.match.params.postId)
-        // console.log(postId)
-        // const {posts} = this.props
-
-        // let currentPost: PostStore.Post;
-
+    const postId = parseInt(this.props.match.params.postId)
         
-        // for (let i=0; i<posts.length; i++) {
-        //     console.log(i)
-        //     if (posts[i].postId === postId) {
-        //         currentPost = posts[i];
-        //         break;   
-        //     } 
-        // }
-        
-        // posts.forEach(post => {
-        //     if (post.postId === postId) {
-        //         currentPost = post
-        //     }            
-        // });
       if (this.props.currentPost) {
             const {date, course, body, header, attachment, imageSrc} = this.props.currentPost;
 
@@ -56,9 +38,7 @@ class Post extends React.Component<PostProps> {
                             </div>
                             <p className="date">{formatDate(date)}</p>
                         </div>
-                    
-
-                    Put attachment preview here
+                        Put attachment preview here
                 </div>
             )
         }

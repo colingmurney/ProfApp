@@ -16,7 +16,9 @@ namespace ProfApp.Models
         public DbSet<Comment> Comments { get; set; }
         public DbSet<Downvote> Downvotes { get; set; }
         public DbSet<Upvote> Upvotes { get; set; }
-        public DbSet<PostResponse> PostResponses { get; set; }
+        public DbSet<SignedInPosts> SignedInPosts { get; set; }
+        public DbSet<NotSignedInPosts> NotSignedInPosts { get; set; }
+        public DbSet<SearchPreviewResults> SearchPreviewResults { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -52,9 +54,14 @@ namespace ProfApp.Models
                 .HasIndex(p => new { p.ProfFirstName, p.ProfLastName, p.SchoolId  })
                     .IsUnique();
 
-            modelBuilder.Entity<PostResponse>()
+            modelBuilder.Entity<SignedInPosts>()
                 .HasNoKey();
 
+            modelBuilder.Entity<NotSignedInPosts>()
+                .HasNoKey();
+
+            modelBuilder.Entity<SearchPreviewResults>()
+                .HasNoKey();
         }
     }
 }

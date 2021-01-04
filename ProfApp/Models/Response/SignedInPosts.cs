@@ -7,8 +7,11 @@ using System.Threading.Tasks;
 namespace ProfApp.Models
 {
 
-    public class PostResponse
+    public class SignedInPosts
     {
+        //This class should inherit NotSignedInPosts and only have attribute CurrentVoteStatus,
+        //but I was getting weird errors
+
         public int PostId { get; set; }
         public DateTime Date { get; set; }
         public string Course { get; set; }
@@ -19,7 +22,7 @@ namespace ProfApp.Models
         public string ImageSrc { get; set; }
         public int ProfId { get; set; }
         public int StudentId { get; set; }
-
-        public int? Vote { get; set; }
+        public int? CurrentVoteStatus { get; set; }
+        public int TotalVotes { get; set; }
     }
 }

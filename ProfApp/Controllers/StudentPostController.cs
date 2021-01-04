@@ -70,35 +70,19 @@ namespace ProfApp.Controllers
         [AllowAnonymous]
         public async Task<ActionResult> GetAllPosts()
         {
-
-            //Make this endpoint check if cookie was passed
-            //if so, verify authentication.
-            //Make stored procedure that takes studentId and returns all the posts with isUpvoted and isDownvoted fields
-            //Add [NotMapped] fields to Post (isUpvoted & isDownvoted)
-            //Iterate through Posts retrieved and add isUpvoted true or isDownvoted true to where applicable
-
-            //Should really think of a stored procedure to return Posts with isUpvoted and isDownvoted columns added to it
-            //can just iterate through post results and make modification to Attachemnt and ImageSrc
-            //this will reduce BigO to linear instead of being exponential 
-
             // check if access token was passed
             var accessToken = await HttpContext.GetTokenAsync("access_token");
             if (accessToken == null)
             {
                 try
                 {
-                    var posts = await _context.Posts.Select(x => new Post()
+                    List<NotSignedInPosts> posts = await _context.NotSignedInPosts.FromSqlRaw("EXECUTE dbo.GetPostsNotSignedIn").ToListAsync();
+
+                    foreach (NotSignedInPosts post in posts)
                     {
-                        PostId = x.PostId,
-                        ProfId = x.ProfId,
-                        StudentId = x.StudentId,
-                        Date = x.Date,
-                        Course = x.Course,
-                        Header = x.Header,
-                        Body = x.Body,
-                        Attachment = Path.GetFileName(x.Attachment),
-                        ImageSrc = String.Format("{0}://{1}{2}/Files/Images/{3}", Request.Scheme, Request.Host, Request.PathBase, Path.GetFileName(x.Attachment))
-                    }).ToListAsync();
+                        post.Attachment = Path.GetFileName(post.Attachment);
+                        post.ImageSrc = String.Format("{0}://{1}{2}/Files/Images/{3}", Request.Scheme, Request.Host, Request.PathBase, Path.GetFileName(post.Attachment));
+                    }
 
                     return Ok(posts);
 
@@ -121,13 +105,11 @@ namespace ProfApp.Controllers
                 }
 
                 var studentId = new SqlParameter("StudentId", student.StudentId);
-                List<PostResponse> posts = await _context.PostResponses.FromSqlRaw("EXECUTE dbo.GetPostsWithVote @StudentId", studentId).ToListAsync();
+                List<SignedInPosts> posts = await _context.SignedInPosts.FromSqlRaw("EXECUTE dbo.GetPostsSignedIn @StudentId", studentId).ToListAsync();
 
-
-                //loop through list and modify properties (ImageSrc)
-                foreach (PostResponse post in posts)
+                //loop through list and modify properties
+                foreach (SignedInPosts post in posts)
                 {
-                    //post.Student = null;
                     post.Attachment = Path.GetFileName(post.Attachment);
                     post.ImageSrc = String.Format("{0}://{1}{2}/Files/Images/{3}", Request.Scheme, Request.Host, Request.PathBase, Path.GetFileName(post.Attachment));
                 }
@@ -155,7 +137,23 @@ namespace ProfApp.Controllers
                 return Ok(post);
 
             }
-            catch (InvalidOperationException e)
+            catch (Exception e)
+            {
+                return BadRequest(e);
+            }
+        }
+
+        [HttpGet("search-preview")]
+        [AllowAnonymous]
+        public async Task<ActionResult> searchPreview([FromQuery(Name = "search")] string searchInput)
+        {
+            try
+            {
+                var searchInputParam = new SqlParameter("SearchInput", searchInput);
+                List<SearchPreviewResults> posts = await _context.SearchPreviewResults.FromSqlRaw("EXECUTE dbo.SearchPreviewResults @SearchInput", searchInputParam).ToListAsync();
+                return Ok(posts);
+            }
+            catch (InvalidCastException e)
             {
                 return BadRequest(e);
             }
@@ -184,5 +182,15 @@ namespace ProfApp.Controllers
             return imagePath;
         }
 
+        //[NonAction]
+        //public void ModifyPosts(List<NotSignedInPosts> posts)
+        //{
+            
+        //    foreach (NotSignedInPosts post in posts)
+        //    {
+        //        post.Attachment = Path.GetFileName(post.Attachment);
+        //        post.ImageSrc = String.Format("{0}://{1}{2}/Files/Images/{3}", Request.Scheme, Request.Host, Request.PathBase, Path.GetFileName(post.Attachment));
+        //    }
+        //}
     }
 }
