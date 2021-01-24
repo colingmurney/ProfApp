@@ -33,7 +33,7 @@ export interface Post {
     prof: null,
     studentId: number,
     student: null,
-    currentVoteStatus?: number,
+    currentVoteStatus?: VoteStatus, // for signed in users
     totalVotes: number
 }
 
@@ -107,9 +107,10 @@ export interface fetchCurrentPost {
 }
 
 export interface voteAction {
-    type: "VOTE_POST";
-    index: number;
-    currentVoteStatusStatus?: number;
+    type: "UPVOTE_POST" | "DOWNVOTE_POST" | "REMOVE_VOTE";
+    postId: number;
+    currentVoteStatus: VoteStatus;
+    totalVotes: number;
     errorMsg?: string;
 }
 
@@ -122,6 +123,12 @@ export interface searchPreviewAction {
     type: "SEARCH_PREVIEW";
     searchPreviewResults?: SearchPreviewResult[];
     errorMsg?: string;
+}
+
+export enum VoteStatus {
+    downvote,
+    upvote,
+    none
 }
 
 export type KnownAction = inputFileAction | getProfsAction | selectProfAction | changeCourseAction |
@@ -172,7 +179,6 @@ export const actionCreators = {
                 if (posts[i].postId === postId) {
                     dispatch({ type: 'FETCH_CURRENT_POST', currentPost: posts[i] });
                     postInStore = true;
-                    // currentPost = posts[i];
                     break;   
                 } 
             }
@@ -182,39 +188,45 @@ export const actionCreators = {
             await axios.get<Post>(`api/studentpost/single/?postId=${postId}`)
             .then((response) => {
                     dispatch({ type: 'FETCH_CURRENT_POST', currentPost: response.data  });
-                })
-                .catch(() => {
-                    dispatch({ type: 'FETCH_CURRENT_POST', errorMsg: "Posts were unable to load"})
-                });
+            })
+            .catch(() => {
+                dispatch({ type: 'FETCH_CURRENT_POST', errorMsg: "Posts were unable to load"})
+            });
         }
     },
-    votePost: (voteType: 'upvote' | 'downvote', postIndex: number): AppThunkAction<KnownAction> => async (dispatch, getstate) => {
-        let upvoteSuccessful = false;
+    upvotePost: (postId: number, currentVoteStatus: VoteStatus): AppThunkAction<KnownAction> => async (dispatch) => {
         let errorMsg = "";
-        let { posts } = getstate().post; 
-        const postId = posts[postIndex].postId;
-
-        await axios.post(`api/vote/${voteType}/?postId=${postId}`)
-            .then(() => {
-                    upvoteSuccessful = true;
-                })
-                .catch((err) => {
-                    errorMsg = err;
-                });
-        
-        if (upvoteSuccessful) {
-            // posts[postIndex].vote = 1;
-            let vote: 1 | 0;
-            if (voteType === 'upvote') {
-                vote = 1;
-            } else if (voteType === 'downvote') {
-                vote = 0;
-            }
-            dispatch({ type: 'VOTE_POST', index: postIndex, currentVoteStatusStatus: vote})
-        } else {
-            dispatch({ type: 'VOTE_POST', index: postIndex, errorMsg: errorMsg})
-        }
+        await axios.post<number>(`api/vote/upvote/?postId=${postId}`)
+            .then((response) => {
+                currentVoteStatus = VoteStatus.upvote;
+                dispatch({ type: 'UPVOTE_POST', postId: postId, currentVoteStatus: currentVoteStatus, totalVotes: response.data})
+            })
+            .catch((err) => {
+                errorMsg = err;
+            });
     },
+    downvotePost: (postId: number, currentVoteStatus: VoteStatus): AppThunkAction<KnownAction> => async (dispatch) => {
+        let errorMsg = "";
+        await axios.post<number>(`api/vote/downvote/?postId=${postId}`)
+            .then((response) => {
+                currentVoteStatus = VoteStatus.downvote;
+                dispatch({ type: 'DOWNVOTE_POST', postId: postId, currentVoteStatus: currentVoteStatus, totalVotes: response.data})
+                })
+            .catch((err) => {
+                errorMsg = err;
+            });
+    },
+    removeVote: (postId: number, currentVoteStatus: VoteStatus): AppThunkAction<KnownAction> => async (dispatch) => {
+        let errorMsg = "";
+        currentVoteStatus = VoteStatus.none;
+        await axios.post<number>(`api/vote/remove-vote/?postId=${postId}`)
+        .then((response) => {
+            dispatch({ type: 'REMOVE_VOTE', postId: postId, currentVoteStatus: currentVoteStatus, totalVotes: response.data})
+            })
+        .catch((err) => {
+            errorMsg = err;
+        });
+    },  
     uploadPost: (): AppThunkAction<KnownAction> => async (dispatch, getState) => {
         const {postHeader, postCourse, postBody, profIdSelected, inputFiles} = getState().post;
 
@@ -323,11 +335,31 @@ export const reducer: Reducer<PostState> = (state = initialState, incomingAction
                 ...state,
                 uploadSuccessful: action.uploadSuccessful,
             }
-        case 'VOTE_POST':
+        case 'UPVOTE_POST':
             return {
                 ...state,
-                posts: state.posts.map((post, i) => i === action.index ? {...post, vote: action.currentVoteStatusStatus} : post
-                )
+                posts: state.posts.map((post) => (
+                    post.postId === action.postId ? {...post, currentVoteStatus: action.currentVoteStatus,
+                        totalVotes: action.totalVotes } : post
+                ))
+            }
+        case 'DOWNVOTE_POST':
+            return {
+                ...state,
+                posts: state.posts.map((post) => (
+                    post.postId === action.postId ? {...post, currentVoteStatus: action.currentVoteStatus,
+                        totalVotes: action.totalVotes } : post
+                ))
+            }
+        case 'REMOVE_VOTE':
+            return {
+                ...state,
+                posts: state.posts.map((post) => (
+                    post.postId === action.postId ? {...post, 
+                        currentVoteStatus: action.currentVoteStatus,
+                        totalVotes: action.totalVotes
+                    } : post
+                ))
             }
         case 'SEARCH_PREVIEW':
             return {

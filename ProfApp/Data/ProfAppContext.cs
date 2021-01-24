@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System;
 
 namespace ProfApp.Models
 {
@@ -19,6 +20,7 @@ namespace ProfApp.Models
         public DbSet<SignedInPosts> SignedInPosts { get; set; }
         public DbSet<NotSignedInPosts> NotSignedInPosts { get; set; }
         public DbSet<SearchPreviewResults> SearchPreviewResults { get; set; }
+        public DbSet<PostVoteTotal> TotalVotes { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -61,6 +63,9 @@ namespace ProfApp.Models
                 .HasNoKey();
 
             modelBuilder.Entity<SearchPreviewResults>()
+                .HasNoKey();
+
+            modelBuilder.Entity<PostVoteTotal>()
                 .HasNoKey();
         }
     }

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using ProfApp.Models;
@@ -41,11 +42,13 @@ namespace ProfApp.Controllers
             // check if claim == player in the database
             var claimEmail = JwtAuthentication.GetClaim(accessToken, JwtAuthentication.claimType);
             Student student = await _context.Students.SingleOrDefaultAsync(x => x.Email == claimEmail);
-            if (student == null) return Unauthorized("Player was not found.");
+            if (student == null) return Unauthorized("Student was not found.");
 
             // check for wrong token key or expired token
             if (!JwtAuthentication.ValidateCurrentToken(accessToken, _secret))
             {
+                // could probably destroy the token here as well
+
                 return Unauthorized("Invalid access token.");
             }
             try
@@ -65,11 +68,11 @@ namespace ProfApp.Controllers
                 _context.Upvotes.Add(upvote);
                 await _context.SaveChangesAsync();
 
-                //create new jwt and attach to response
-                //var tokenString = JwtAuthentication.CreateJWT(_secret, student.Email);
-                //Response.Cookies.Append("X-Access-Token", tokenString, new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict });
-
-                return Ok("Upvote successful");
+                // get the new TotalVotes for the post
+                var postIdParam = new SqlParameter("PostId", postId);
+                List<PostVoteTotal> totalVotes = await _context.TotalVotes.FromSqlRaw("EXECUTE dbo.GetTotalVotes @PostId", postIdParam).ToListAsync();
+                
+                return Ok(totalVotes.FirstOrDefault().TotalVotes);
             } 
             
             catch(DbUpdateException ex)
@@ -88,7 +91,7 @@ namespace ProfApp.Controllers
             // check if claim == player in the database
             var claimEmail = JwtAuthentication.GetClaim(accessToken, JwtAuthentication.claimType);
             Student student = await _context.Students.SingleOrDefaultAsync(x => x.Email == claimEmail);
-            if (student == null) return Unauthorized("Player was not found.");
+            if (student == null) return Unauthorized("Student was not found.");
 
             // check for wrong token key or expired token
             if (!JwtAuthentication.ValidateCurrentToken(accessToken, _secret))
@@ -112,11 +115,11 @@ namespace ProfApp.Controllers
                 _context.Downvotes.Add(downvote);
                 await _context.SaveChangesAsync();
 
-                //create new jwt and attach to response
-                //var tokenString = JwtAuthentication.CreateJWT(_secret, student.Email);
-                //Response.Cookies.Append("X-Access-Token", tokenString, new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict });
+                // get the new TotalVotes for the post
+                var postIdParam = new SqlParameter("PostId", postId);
+                List<PostVoteTotal> totalVotes = await _context.TotalVotes.FromSqlRaw("EXECUTE dbo.GetTotalVotes @PostId", postIdParam).ToListAsync();
 
-                return Ok("Downvote successful");
+                return Ok(totalVotes.FirstOrDefault().TotalVotes);
             }
 
             catch (DbUpdateException ex)
@@ -125,5 +128,48 @@ namespace ProfApp.Controllers
             }
         }
 
-    }
+        [HttpPost("remove-vote")]
+        public async Task<ActionResult> RemoveVote(int postId)
+        {
+            // check if access token was passed
+            var accessToken = await HttpContext.GetTokenAsync("access_token");
+            if (accessToken == null) return Unauthorized("No access token received.");
+
+            // check if claim == player in the database
+            var claimEmail = JwtAuthentication.GetClaim(accessToken, JwtAuthentication.claimType);
+            Student student = await _context.Students.SingleOrDefaultAsync(x => x.Email == claimEmail);
+            if (student == null) return Unauthorized("Student was not found.");
+
+            // check for wrong token key or expired token
+            if (!JwtAuthentication.ValidateCurrentToken(accessToken, _secret))
+            {
+                return Unauthorized("Invalid access token.");
+            }
+
+            try
+            {
+                Upvote upvote = await _context.Upvotes.SingleOrDefaultAsync(d => d.PostId == postId && d.StudentId == student.StudentId);
+                if (upvote != null) _context.Upvotes.Remove(upvote);
+
+                Downvote downvote = await _context.Downvotes.SingleOrDefaultAsync(d => d.PostId == postId && d.StudentId == student.StudentId);
+                if (downvote != null) _context.Downvotes.Remove(downvote);
+
+                await _context.SaveChangesAsync();
+
+                // get the new TotalVotes for the post
+                var postIdParam = new SqlParameter("PostId", postId);
+                List<PostVoteTotal> totalVotes = await _context.TotalVotes.FromSqlRaw("EXECUTE dbo.GetTotalVotes @PostId", postIdParam).ToListAsync();
+
+                return Ok(totalVotes.FirstOrDefault().TotalVotes);
+            }
+
+            catch (DbUpdateException ex)
+            {
+                return BadRequest(ex.InnerException.ToString());
+            }
+
+
+        }
+
+        }
 }

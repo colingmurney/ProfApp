@@ -126,4 +126,22 @@
 --SELECT TOP 5 * FROM allSearchPreviewResults;
 --END;
 
-EXEC dbo.SearchPreviewResults @SearchInput = 'm';
+--EXEC dbo.SearchPreviewResults @SearchInput = 'm';
+
+--CREATE OR ALTER PROCEDURE GetTotalVotes @PostId int
+--AS
+--BEGIN
+--SELECT (
+--	SELECT COUNT(PostId)
+--	FROM Upvote
+--	WHERE PostId = @PostId
+--	) - (
+--	SELECT COUNT(PostId)
+--	FROM Downvote
+--	WHERE PostId = @PostId
+--	) as TotalVotes;
+--END;
+
+EXEC dbo.GetTotalVotes @PostId = 14;
+
+

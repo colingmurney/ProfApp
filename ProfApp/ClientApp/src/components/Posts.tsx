@@ -12,7 +12,23 @@ class Posts extends React.Component<HomeProps> {
     componentDidMount() {
         this.props.resetSearchPreview()
     }
-    //Dynamically make components for posts, eventually make pagination to load more posts
+
+    handleUpvote(postId: number, currentVoteStatus: number) {
+        if (currentVoteStatus === PostStore.VoteStatus.upvote) {
+            this.props.removeVote(postId, currentVoteStatus);
+        } else {
+            this.props.upvotePost(postId, currentVoteStatus)
+        }
+    }
+
+    handleDownvote(postId: number, currentVoteStatus: number) {
+        if (currentVoteStatus === PostStore.VoteStatus.downvote) {
+            this.props.removeVote(postId, currentVoteStatus);
+        } else {
+            this.props.downvotePost(postId, currentVoteStatus)
+        }
+    }
+
     public render() {
         const { isSignedIn } = this.props;
         const posts: any[] = [];
@@ -26,12 +42,24 @@ class Posts extends React.Component<HomeProps> {
                 <div className="jumbotron p-3 pb-1" key={index}>
                     <div className="row">
                         <div className="col-1">
-                        {/* Up and down icons for voting on a post.
-                        Disabled if no user is not signed in.
-                        Highlights option previously selected by user*/}
                         
-                        <div><button onClick={() => this.props.votePost('upvote', index)} disabled={currentVoteStatus === 1 || !isSignedIn ? true : false}>Upvote</button></div>
-                        <div><button onClick={() => this.props.votePost('downvote', index)} disabled={currentVoteStatus === 0 || !isSignedIn ? true : false}>Downvote</button></div>      
+                        <div>
+                            <button onClick={() =>
+                            this.handleUpvote(postId, currentVoteStatus)} 
+                            className={currentVoteStatus === PostStore.VoteStatus.upvote ? "btn-success" : ""}
+                            disabled={!isSignedIn ? true : false}>
+                                Upvote
+                            </button>
+                        </div>
+                        <div>
+                            <button onClick={() =>
+                            this.handleDownvote(postId, currentVoteStatus)}                            
+                            className={currentVoteStatus === PostStore.VoteStatus.downvote ? "btn-success" : ""}
+                            disabled={!isSignedIn ? true : false}>
+                                Downvote
+                            </button>
+                        </div>
+
                         <div>{totalVotes}</div>
 
                         </div>
