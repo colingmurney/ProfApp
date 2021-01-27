@@ -1,14 +1,16 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { ApplicationState } from '../store';
-import * as LoginStore from '../store/Login';
-import '../css/Login.css'; 
+import '../css/login.css'; 
 import { Redirect } from 'react-router';
+import { Link } from 'react-router-dom';
 import Spinner from 'react-bootstrap/Spinner';
+import { LoginState } from '../store/interfaces/ILogin';
+import { loginActionCreators } from '../store/actions/loginActions';
 
 type SignInProps =
-    LoginStore.LoginState &
-    typeof LoginStore.actionCreators
+    LoginState &
+    typeof loginActionCreators
 
 class SignIn extends React.PureComponent<SignInProps> {
     
@@ -19,12 +21,10 @@ class SignIn extends React.PureComponent<SignInProps> {
   
   public render() {
     
-    const {isSignUpPage, isSignedIn, isFetching, incorrectCredentials} = this.props;
+    const {isSignedIn, isFetching, incorrectCredentials} = this.props;
     if (isSignedIn)
-          return <Redirect to='/'/>
-    if (isSignUpPage) {
-      return <Redirect to='/signup'/>
-    }
+      return <Redirect to='/'/>
+
     if (isFetching) {
       return (
         <div className="d-flex justify-content-center">
@@ -79,9 +79,7 @@ class SignIn extends React.PureComponent<SignInProps> {
               Sign in
             </button>
           </form>
-          <button className="btn btn-secondary" onClick={() => this.props.toggleView()}> 
-            Make an Account
-          </button>
+          <Link className="btn btn-secondary" to='/signup'>Make an Account</Link>
         </div>
         )
     }
@@ -89,5 +87,5 @@ class SignIn extends React.PureComponent<SignInProps> {
 
 export default connect(
     (state: ApplicationState) => state.login,
-    LoginStore.actionCreators
+    loginActionCreators
 )(SignIn as any);

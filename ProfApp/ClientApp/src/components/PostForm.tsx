@@ -1,16 +1,17 @@
 import React, { FormEvent } from 'react';
-import * as PostStore from '../store/Post';
 import { connect } from 'react-redux';
 import { ApplicationState } from '../store';
 import Dropdown from './Dropdown';
+import { CreatePostState } from '../store/interfaces/ICreatePost';
+import { createPostActionCreators } from '../store/actions/createPostActions';
 
-export type PostProps = PostStore.PostState &
-    typeof PostStore.actionCreators 
-
+type PostProps = CreatePostState &
+    typeof createPostActionCreators
+    
 class Post extends React.Component<PostProps> {
     componentDidMount() {
+        // retrieve profs before child prof dropdown component renders
         this.props.getProfs();
-        this.props.fetchPosts();
     }
 
     handlePostUpload(e: FormEvent<HTMLFormElement>) {
@@ -19,7 +20,6 @@ class Post extends React.Component<PostProps> {
     }
 
     public render() {
-
         const {uploadSuccessful} = this.props;
 
         if (uploadSuccessful === undefined || !uploadSuccessful) {
@@ -70,6 +70,6 @@ class Post extends React.Component<PostProps> {
 }
 
 export default connect(
-    (state: ApplicationState) => state.post,
-    PostStore.actionCreators
+    (state: ApplicationState) => state.createPost,
+    createPostActionCreators
 )(Post as any)

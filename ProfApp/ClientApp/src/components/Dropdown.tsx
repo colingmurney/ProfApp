@@ -1,42 +1,31 @@
 import React from 'react';
-import * as PostStore from '../store/Post';
+import { CreatePostState } from '../store/interfaces/ICreatePost';
+import { createPostActionCreators } from '../store/actions/createPostActions';
 import { connect } from 'react-redux';
 import { ApplicationState } from '../store';
-import * as Post from './PostForm';
 
-interface injected {
-    dropdownType: string;
-}
-
-type DropdownProps = PostStore.PostState &
-    typeof PostStore.actionCreators &
-    injected
+type DropdownProps = CreatePostState &
+    typeof createPostActionCreators
 
 class Dropdown extends React.Component<DropdownProps> {
-    
-
-    //Dynamically render select opitons like in RecLeague App
     public render() {
-
         const dropdownList: any[] = [];
 
-    // dynamically display the filtered options for the dropdown
-    this.props.profs.map((prof) => {
-      return dropdownList.push(
-        <option key={prof.id} value={JSON.stringify({id: prof.id, name: prof.name})} >
-          {prof.name}
-        </option>
-      );
+        // generate options for professor select dropdown
+        this.props.profs.map((prof) => {
+        return dropdownList.push(
+            <option key={prof.id} value={JSON.stringify({id: prof.id, name: prof.name})} >
+            {prof.name}
+            </option>
+        );
     });
         return (
             <div className="form-group col-md-4">
                 <label>Select Professor</label>
-                <select className="form-control" onChange={(e) => this.props.selectProf(e)} required>
-                    <option value="" disabled selected>
-                        Professor
-                    </option>
+                <select className="form-control" onChange={(e) => this.props.selectProf(e)}
+                required defaultValue="Professor">
+                    <option value="Professor" disabled />
                         {dropdownList}
-                    
                 </select>
             </div>
         )
@@ -44,6 +33,6 @@ class Dropdown extends React.Component<DropdownProps> {
 }
 
 export default connect(
-    (state: ApplicationState) => state.post,
-    PostStore.actionCreators
+    (state: ApplicationState) => state.createPost,
+    createPostActionCreators
 )(Dropdown as any)

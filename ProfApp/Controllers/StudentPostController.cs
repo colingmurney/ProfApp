@@ -65,77 +65,61 @@ namespace ProfApp.Controllers
             return Ok("Post Successfully Uploaded");
         }
 
-        
         [HttpGet]
         [AllowAnonymous]
-        public async Task<ActionResult> GetAllPosts()
+        public async Task<ActionResult> GetPosts([FromQuery(Name = "postId")] int? postId)
         {
             // check if access token was passed
             var accessToken = await HttpContext.GetTokenAsync("access_token");
-            if (accessToken == null)
-            {
-                try
-                {
-                    List<NotSignedInPosts> posts = await _context.NotSignedInPosts.FromSqlRaw("EXECUTE dbo.GetPostsNotSignedIn").ToListAsync();
-
-                    foreach (NotSignedInPosts post in posts)
-                    {
-                        post.Attachment = Path.GetFileName(post.Attachment);
-                        post.ImageSrc = String.Format("{0}://{1}{2}/Files/Images/{3}", Request.Scheme, Request.Host, Request.PathBase, Path.GetFileName(post.Attachment));
-                    }
-
-                    return Ok(posts);
-
-                }
-                catch (InvalidCastException e)
-                {
-                    return BadRequest(e);
-                }
-            } else
+            if (accessToken != null)
             {
                 // check if claim == player in the database
                 var claimEmail = JwtAuthentication.GetClaim(accessToken, JwtAuthentication.claimType);
                 Student student = await _context.Students.SingleOrDefaultAsync(x => x.Email == claimEmail);
-                if (student == null) return Unauthorized("Player was not found.");
-
-                // check for wrong token key or expired token
-                if (!JwtAuthentication.ValidateCurrentToken(accessToken, _secret))
+                if (student != null && JwtAuthentication.ValidateCurrentToken(accessToken, _secret))
                 {
-                    return Unauthorized("Invalid access token.");
+                    try
+                    {
+                        List<SignedInPosts> posts;
+                        var studentIdParam = new SqlParameter("StudentId", student.StudentId);
+                        if (postId != null)
+                        {
+                            var postIdParam = new SqlParameter("PostId", postId);
+                            posts = await _context.SignedInPosts.FromSqlRaw("EXECUTE dbo.GetPostByIdSignedIn @StudentId, @PostId", studentIdParam, postIdParam).ToListAsync();
+                        } else
+                        {
+                            posts = await _context.SignedInPosts.FromSqlRaw("EXECUTE dbo.GetPostsSignedIn @StudentId", studentIdParam).ToListAsync();
+                        }
+                        foreach (SignedInPosts post in posts)
+                        {
+                            post.Attachment = Path.GetFileName(post.Attachment);
+                            post.ImageSrc = String.Format("{0}://{1}{2}/Files/Images/{3}", Request.Scheme, Request.Host, Request.PathBase, Path.GetFileName(post.Attachment));
+                        }
+                        return Ok(posts);
+                    }
+                    catch (Exception e)
+                    {
+                        return BadRequest(e);
+                    }
                 }
-
-                var studentId = new SqlParameter("StudentId", student.StudentId);
-                List<SignedInPosts> posts = await _context.SignedInPosts.FromSqlRaw("EXECUTE dbo.GetPostsSignedIn @StudentId", studentId).ToListAsync();
-
-                //loop through list and modify properties
-                foreach (SignedInPosts post in posts)
-                {
-                    post.Attachment = Path.GetFileName(post.Attachment);
-                    post.ImageSrc = String.Format("{0}://{1}{2}/Files/Images/{3}", Request.Scheme, Request.Host, Request.PathBase, Path.GetFileName(post.Attachment));
-                }
-
-                return Ok(posts);
             }
-        }
-
-        [HttpGet("single")]
-        [AllowAnonymous]
-        public async Task<ActionResult> GetPost([FromQuery(Name = "postId")] int postId)
-        {
             try
             {
-                var post = await _context.Posts.SingleOrDefaultAsync(x => x.PostId == postId);
-                if (post == null)
+                List<NotSignedInPosts> posts;
+                if (postId != null)
                 {
-                    return BadRequest("Invalid postId");
+                    var postIdParam = new SqlParameter("PostId", postId);
+                    posts = await _context.NotSignedInPosts.FromSqlRaw("EXECUTE dbo.GetPostByIdNotSignedIn @PostId", postIdParam).ToListAsync();
+                } else
+                {
+                    posts = await _context.NotSignedInPosts.FromSqlRaw("EXECUTE dbo.GetPostsNotSignedIn").ToListAsync();
                 }
-
-                var filename = Path.GetFileName(post.Attachment);
-                post.Attachment = filename;
-                post.ImageSrc = String.Format("{0}://{1}{2}/Files/Images/{3}", Request.Scheme, Request.Host, Request.PathBase, filename);
-                
-                return Ok(post);
-
+                foreach (NotSignedInPosts post in posts)
+                { 
+                post.Attachment = Path.GetFileName(post.Attachment);
+                post.ImageSrc = String.Format("{0}://{1}{2}/Files/Images/{3}", Request.Scheme, Request.Host, Request.PathBase, Path.GetFileName(post.Attachment));
+                }
+                return Ok(posts);
             }
             catch (Exception e)
             {
@@ -181,16 +165,5 @@ namespace ProfApp.Controllers
             }
             return imagePath;
         }
-
-        //[NonAction]
-        //public void ModifyPosts(List<NotSignedInPosts> posts)
-        //{
-            
-        //    foreach (NotSignedInPosts post in posts)
-        //    {
-        //        post.Attachment = Path.GetFileName(post.Attachment);
-        //        post.ImageSrc = String.Format("{0}://{1}{2}/Files/Images/{3}", Request.Scheme, Request.Host, Request.PathBase, Path.GetFileName(post.Attachment));
-        //    }
-        //}
     }
 }

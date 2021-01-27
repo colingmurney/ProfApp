@@ -1,24 +1,20 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import PostForm from './PostForm';
-import * as LoginStore from '../store/Login';
-// import * as PostStore from '../store/Post';
+import PostForm from '../components/PostForm';
 import {ApplicationState} from '../store/index'
-
+import { LoginState } from '../store/interfaces/ILogin';
+import { loginActionCreators } from '../store/actions/loginActions';
 
 type MakePostProps =
-    LoginStore.LoginState &
-    typeof LoginStore.actionCreators
-
+    LoginState &
+    typeof loginActionCreators
 
 class MakePost extends React.PureComponent<MakePostProps> {
-  
-    
   public render() {
     const {isSignedIn} = this.props;
     return (
+      // Only render Post component if isSignedIn
       <div>
-        {/* Only render Post component if isSignedIn */}
         {isSignedIn && <PostForm />}
         {!isSignedIn && <div>Sign in to make a post.</div>}
       </div>
@@ -28,5 +24,5 @@ class MakePost extends React.PureComponent<MakePostProps> {
 
 export default connect(
   (state: ApplicationState) => state.login,
-    LoginStore.actionCreators
+    loginActionCreators
 )(MakePost as any);

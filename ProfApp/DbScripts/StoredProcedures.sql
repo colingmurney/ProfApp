@@ -66,6 +66,46 @@
 
 
 --EXEC dbo.GetPostsSignedIn @StudentId = 2;
+ 
+--CREATE OR ALTER PROCEDURE GetPostByIdSignedIn @StudentId int, @PostId int
+--AS
+--BEGIN
+--WITH votedPosts (PostId, Date, Course, Header, Body, Attachment, StudentId, ProfId, CurrentVoteStatus)
+--AS
+--(
+--SELECT Post.PostId, Post.Date, Post.Course, Post.Header, Post.Body, Post.Attachment, Post.StudentId, Post.ProfId, 1 AS CurrentVoteStatus
+--FROM Post, Upvote
+--WHERE Post.PostId = Upvote.PostId AND Upvote.StudentId = @StudentId AND Post.PostId = @PostId
+--UNION
+--SELECT Post.PostId, Post.Date, Post.Course, Post.Header, Post.Body, Post.Attachment, Post.ProfId, Post.StudentId, 0 AS CurrentVoteStatus
+--FROM Post, Downvote
+--WHERE Post.PostId = Downvote.PostId AND Downvote.StudentId = @StudentId AND Post.PostId = @PostId
+--),
+--totalVotes (PostId, TotalVotes)
+--AS
+--(
+--SELECT Post.PostId, COUNT(Upvote.PostId) - COUNT(Downvote.PostId) as TotalVotes
+--FROM Post
+--LEFT JOIN Upvote ON Post.PostId = Upvote.PostId
+--LEFT JOIN Downvote ON Post.PostId = Downvote.PostId
+--WHERE Post.PostId = @PostId
+--GROUP BY Post.PostId
+--)
+--SELECT votedPosts.PostId, Date, Course, Header, Body, Attachment, StudentId, ProfId, CurrentVoteStatus, TotalVotes
+--FROM votedPosts, totalVotes
+--WHERE votedPosts.PostId = totalVotes.PostId
+--UNION
+--SELECT Post.PostId, Date, Course, Header, Body, Attachment, StudentId, ProfId, null as CurrentVoteStatus, TotalVotes
+--FROM Post, totalVotes
+--WHERE Post.PostId = totalVotes.PostId AND Post.PostId = @PostId AND
+--	Post.PostId NOT IN (
+--		SELECT PostId
+--		FROM votedPosts
+--	)
+--ORDER BY Date desc;
+--END;
+
+--EXEC dbo.GetPostByIdSignedIn @StudentId = 1, @PostId = 14;
 
 --CREATE OR ALTER PROCEDURE GetPostsNotSignedIn
 --AS
@@ -86,6 +126,27 @@
 --END;
 
 --EXEC dbo.GetPostsNotSignedIn;
+
+--CREATE OR ALTER PROCEDURE GetPostByIdNotSignedIn @PostId int
+--AS
+--BEGIN
+--WITH totalVotes (PostId, TotalVotes)
+--AS
+--(
+--SELECT Post.PostId as PostId, COUNT(Upvote.PostId) - COUNT(Downvote.PostId) as TotalVotes
+--FROM Post
+--LEFT JOIN Upvote ON Post.PostId = Upvote.PostId
+--LEFT JOIN Downvote ON Post.PostId = Downvote.PostId
+--WHERE Post.PostId = @PostId
+--GROUP BY Post.PostId
+--)
+--SELECT Post.PostId, Date, Course, Header, Body, Attachment, StudentId, ProfId, TotalVotes
+--FROM Post, totalVotes
+--WHERE Post.PostId = totalVotes.PostId
+--ORDER BY Date desc;
+--END;
+
+--EXEC dbo.GetPostByIdNotSignedIn @PostId = 3;
 
 --CREATE OR ALTER PROCEDURE SearchPreviewResults @SearchInput VARCHAR(255)
 --AS
@@ -142,6 +203,6 @@
 --	) as TotalVotes;
 --END;
 
-EXEC dbo.GetTotalVotes @PostId = 14;
+--EXEC dbo.GetTotalVotes @PostId = 14;
 
 
